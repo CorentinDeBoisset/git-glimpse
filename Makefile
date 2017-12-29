@@ -2,7 +2,7 @@ NAME = fast-git-prompt
 BUILD_DIR = ./bin
 SRC_DIR = ./src
 
-CC = cc
+CC = gcc
 INCLUDES = -I $(SRC_PATH)
 LIBS = libgit2
 CFLAGS += -W -Wall -ansi -pedantic
@@ -10,7 +10,7 @@ LDFLAGS +=
 
 ifneq ($(LIBS),)
 	CFLAGS += $(shell pkg-config --cflags $(LIBS))
-	LFLAGS += $(shell pkg-config --libs $(LIBS))
+	LDFLAGS += $(shell pkg-config --libs $(LIBS))
 endif
 
 SRCS = src/main.c
@@ -22,7 +22,7 @@ $(BUILD_DIR)/$(NAME): $(OBJS)
 	@$(CC) $(OBJS) $(LDFLAGS) -o $@
 
 $(BUILD_DIR)/%.o: $(SRC_PATH)/%.c
-	@$(CC) $(CFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 .PHONY: clean
 clean: 

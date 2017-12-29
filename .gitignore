@@ -1,3 +1,4 @@
+.xcode
 *.o
 bin/*
 !bin/.gitkeep
