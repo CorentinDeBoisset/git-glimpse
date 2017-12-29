@@ -1,8 +1,9 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
-#include<git2.h>
+#include <git2.h>
+#include <regex.h>
 
 struct sigils_t {
     char *ahead;
@@ -161,20 +162,52 @@ void get_file_status(git_repository *repo) {
     }
 }
 
-void get_commit_status(git_repository *repo) {
+void get_branch_status(git_repository *repo) {
     size_t ahead, behind;
     git_reference *head, *upstream;
-
+    
     if (git_repository_head(&head, repo))
         return;
+    
+    if (git_reference_is_branch(head)) {
+        printf(git_reference_shorthand(head));
+        
+        if (git_branch_upstream(&upstream, head))
+            return;
 
-    if (git_branch_upstream(&upstream, head))
-        return;
+        git_graph_ahead_behind(&ahead, &behind, repo, git_reference_target(head), git_reference_target(upstream));
 
-    git_graph_ahead_behind(&ahead, &behind, repo, git_reference_target(head), git_reference_target(upstream));
+        if (ahead || behind) {
+            printf("%s%s", ahead ? sigils.ahead : "", behind ? sigils.behind : "");
+        }
+    } else {
+        git_reflog *reflog;
+        const git_reflog_entry *last_entry;
+        const char *reflog_msg;
+        regex_t reflog_regex;
+        regmatch_t regex_matches[2];
+        regcomp(&reflog_regex, "moving from [^ ]* to ([^ ]*)$", REG_EXTENDED);
+        
+        git_reflog_read(&reflog, repo, "HEAD");
+        last_entry = git_reflog_entry_byindex(reflog, 0);
+        if (last_entry) {
+            reflog_msg = git_reflog_entry_message(last_entry);
+            if (regexec(&reflog_regex, reflog_msg, 2, regex_matches, 0) == 0) {
+                if (regex_matches[1].rm_so == (regoff_t) -1)
+                    return;
 
-    if (ahead || behind) {
-        printf("%s%s", ahead ? sigils.ahead : "", behind ? sigils.behind : "");
+                if (regex_matches[1].rm_eo - regex_matches[1].rm_so == 40) {
+                    // The reference is a commit hash
+                    git_object *obj;
+                    git_buf buffer = {0};
+                    git_reference_peel(&obj, head, GIT_OBJ_COMMIT);
+                    git_object_short_id(&buffer, obj);
+                    printf("%s", buffer.ptr);
+                } else {
+                    printf("%s", reflog_msg + regex_matches[1].rm_so);
+                }
+            }
+        }
     }
 }
 
@@ -196,8 +229,8 @@ int main(int argc, char **argv)
 
     if(0 == git_repository_open(&repo, cwd)) {
         printf("(git:");
+        get_branch_status(repo);
         get_file_status(repo);
-        get_commit_status(repo);
         get_stash_status(repo);
         printf(")\n");
 
