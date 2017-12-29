@@ -94,7 +94,7 @@ void parse_arguments(int argc, char **argv)
             case 0:
                 break;
             default:
-                fprintf(stderr, "option `-%c' is invalid: ignored\n\n", optopt);
+                fprintf(stderr, "option is invalid: ignored\n\n");
                 exit(EXIT_FAILURE);
                 break;
         }
