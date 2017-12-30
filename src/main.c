@@ -230,8 +230,8 @@ int main(int argc, char **argv)
     if(0 == git_repository_open(&repo, cwd)) {
         printf("(git:");
         get_branch_status(repo);
-        get_file_status(repo);
         get_stash_status(repo);
+        get_file_status(repo);
         printf(")\n");
 
         git_repository_free(repo);

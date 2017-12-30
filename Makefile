@@ -5,7 +5,7 @@ SRC_DIR = ./src
 CC = gcc
 INCLUDES = -I $(SRC_PATH)
 LIBS = libgit2
-CFLAGS += -W -Wall -ansi -pedantic
+CFLAGS += -W -Wall -ansi -pedantic -O2
 LDFLAGS +=
 
 ifneq ($(LIBS),)
