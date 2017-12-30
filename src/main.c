@@ -129,13 +129,21 @@ int stash_cb(size_t index, const char *message, const int *stash_id, int *payloa
 }
 
 void get_file_status(git_repository *repo) {
+    git_index *index;
+
     git_status_options status_opts;
     git_status_list *status_list;
-    size_t i, status_list_size;
     const git_status_entry *status_entry;
+    size_t i, status_list_size;
     int staged = 0;
     int unstaged = 0;
     int untracked = 0;
+
+    git_repository_index(&index, repo);
+    if (git_index_has_conflicts(index)) {
+        printf("%s", sigils.conflicts);
+        return;
+    }
 
     git_status_init_options(&status_opts, GIT_STATUS_OPTIONS_VERSION);
     status_opts.flags |= GIT_STATUS_OPT_INCLUDE_UNTRACKED;
@@ -145,7 +153,7 @@ void get_file_status(git_repository *repo) {
     for (i = 0; i < status_list_size; i++) {
         status_entry = git_status_byindex(status_list, i);
 
-        /* if there are no other flags, the file is pristine */
+        /* if there are no other flags, it means the file is untouched */
         if (status_entry->status == GIT_STATUS_CURRENT) {
             continue;
         } else if (status_entry->status == GIT_STATUS_WT_NEW) {
@@ -174,13 +182,13 @@ void get_file_status(git_repository *repo) {
 void get_branch_status(git_repository *repo) {
     size_t ahead, behind;
     git_reference *head, *upstream;
-    
+
     if (git_repository_head(&head, repo))
         return;
-    
+
     if (git_reference_is_branch(head)) {
-        printf(git_reference_shorthand(head));
-        
+        printf("%s", git_reference_shorthand(head));
+
         if (git_branch_upstream(&upstream, head))
             return;
 
@@ -196,7 +204,7 @@ void get_branch_status(git_repository *repo) {
         regex_t reflog_regex;
         regmatch_t regex_matches[2];
         regcomp(&reflog_regex, "moving from [^ ]* to ([^ ]*)$", REG_EXTENDED);
-        
+
         git_reflog_read(&reflog, repo, "HEAD");
         last_entry = git_reflog_entry_byindex(reflog, 0);
         if (last_entry) {
@@ -206,9 +214,9 @@ void get_branch_status(git_repository *repo) {
                     return;
 
                 if (regex_matches[1].rm_eo - regex_matches[1].rm_so == 40) {
-                    // The reference is a commit hash
+                    /* The reference is a commit hash */
                     git_object *obj;
-                    git_buf buffer = {0};
+                    git_buf buffer = {NULL, 0, 0};
                     git_reference_peel(&obj, head, GIT_OBJ_COMMIT);
                     git_object_short_id(&buffer, obj);
                     printf("%s", buffer.ptr);

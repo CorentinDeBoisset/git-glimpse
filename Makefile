@@ -2,7 +2,7 @@ NAME = fast-git-prompt
 BUILD_DIR = ./bin
 SRC_DIR = ./src
 
-CC = gcc
+CC = cc
 INCLUDES = -I $(SRC_PATH)
 LIBS = libgit2
 CFLAGS += -W -Wall -ansi -pedantic -O2
