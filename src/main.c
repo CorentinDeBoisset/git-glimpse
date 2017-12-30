@@ -1,9 +1,8 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <getopt.h>
-#include <string.h>
 #include <git2.h>
-#include <regex.h>
+
+#include "functions.h"
 
 #define C_RED  "%F{red}"
 #define C_GRN  "%F{green}"
@@ -121,123 +120,13 @@ void parse_arguments(int argc, char **argv)
         sigils.clean = C_GRN"✔"C_RESET;
 }
 
-int stash_cb(size_t index, const char *message, const int *stash_id, int *payload)
-{
-    (void)index; (void)message; (void)stash_id;
-    (*payload)++;
-    return 0;
-}
-
-void get_file_status(git_repository *repo) {
-    git_index *index;
-
-    git_status_options status_opts;
-    git_status_list *status_list;
-    const git_status_entry *status_entry;
-    size_t i, status_list_size;
-    int staged = 0;
-    int unstaged = 0;
-    int untracked = 0;
-
-    git_repository_index(&index, repo);
-    if (git_index_has_conflicts(index)) {
-        printf("%s", sigils.conflicts);
-        return;
-    }
-
-    git_status_init_options(&status_opts, GIT_STATUS_OPTIONS_VERSION);
-    status_opts.flags |= GIT_STATUS_OPT_INCLUDE_UNTRACKED;
-    git_status_list_new(&status_list, repo, &status_opts);
-    status_list_size = git_status_list_entrycount(status_list);
-
-    for (i = 0; i < status_list_size; i++) {
-        status_entry = git_status_byindex(status_list, i);
-
-        /* if there are no other flags, it means the file is untouched */
-        if (status_entry->status == GIT_STATUS_CURRENT) {
-            continue;
-        } else if (status_entry->status == GIT_STATUS_WT_NEW) {
-            untracked++;
-        } else {
-            if (status_entry->status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
-                staged++;
-            if (status_entry->status & (GIT_STATUS_WT_DELETED | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_TYPECHANGE))
-                unstaged++;
-        }
-    }
-    git_status_list_free(status_list);
-
-    if (staged || unstaged || untracked) {
-        printf(
-            "%s%s%s",
-            staged ? sigils.staged : "",
-            unstaged ? sigils.unstaged : "",
-            untracked ? sigils.untracked : ""
-        );
-    } else {
-        printf("%s", sigils.clean);
-    }
-}
-
-void get_branch_status(git_repository *repo) {
-    size_t ahead, behind;
-    git_reference *head, *upstream;
-
-    if (git_repository_head(&head, repo))
-        return;
-
-    if (git_reference_is_branch(head)) {
-        printf("%s", git_reference_shorthand(head));
-
-        if (git_branch_upstream(&upstream, head))
-            return;
-
-        git_graph_ahead_behind(&ahead, &behind, repo, git_reference_target(head), git_reference_target(upstream));
-
-        if (ahead || behind) {
-            printf("%s%s", ahead ? sigils.ahead : "", behind ? sigils.behind : "");
-        }
-    } else {
-        git_reflog *reflog;
-        const git_reflog_entry *last_entry;
-        const char *reflog_msg;
-        regex_t reflog_regex;
-        regmatch_t regex_matches[2];
-        regcomp(&reflog_regex, "moving from [^ ]* to ([^ ]*)$", REG_EXTENDED);
-
-        git_reflog_read(&reflog, repo, "HEAD");
-        last_entry = git_reflog_entry_byindex(reflog, 0);
-        if (last_entry) {
-            reflog_msg = git_reflog_entry_message(last_entry);
-            if (regexec(&reflog_regex, reflog_msg, 2, regex_matches, 0) == 0) {
-                if (regex_matches[1].rm_so == (regoff_t) -1)
-                    return;
-
-                if (regex_matches[1].rm_eo - regex_matches[1].rm_so == 40) {
-                    /* The reference is a commit hash */
-                    git_object *obj;
-                    git_buf buffer = {NULL, 0, 0};
-                    git_reference_peel(&obj, head, GIT_OBJ_COMMIT);
-                    git_object_short_id(&buffer, obj);
-                    printf("%s", buffer.ptr);
-                } else {
-                    printf("%s", reflog_msg + regex_matches[1].rm_so);
-                }
-            }
-        }
-    }
-}
-
-void get_stash_status(git_repository *repo) {
-    int stash_count = 0;
-    git_stash_foreach(repo, (git_stash_cb)stash_cb, &stash_count);
-    printf("%s", stash_count ? sigils.stashed : "");
-}
-
 int main(int argc, char **argv)
 {
     char cwd[BUFSIZ];
     git_repository *repo = NULL;
+    struct tree_status tstatus;
+    struct branch_status bstatus;
+    int stash_count;
 
     parse_arguments(argc, argv);
     getcwd(cwd, BUFSIZ);
@@ -245,12 +134,14 @@ int main(int argc, char **argv)
     git_libgit2_init();
 
     if(0 == git_repository_open(&repo, cwd)) {
-        printf("(git:");
-        get_branch_status(repo);
-        get_stash_status(repo);
-        get_file_status(repo);
-        printf(")\n");
+        stash_count = get_stash_count(repo);
+        get_branch_status(&bstatus, repo);
+        get_tree_status(&tstatus, repo);
 
+        printf("(git:%s)", bstatus.head_name ? bstatus.head_name : "");
+
+        if (NULL == bstatus.head_name)
+            free(bstatus.head_name);
         git_repository_free(repo);
     }
 

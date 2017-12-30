@@ -3,7 +3,7 @@ BUILD_DIR = ./bin
 SRC_DIR = ./src
 
 CC = cc
-INCLUDES = -I $(SRC_PATH)
+INCLUDES = -I$(SRC_DIR)
 LIBS = libgit2
 CFLAGS += -W -Wall -ansi -pedantic -O2
 LDFLAGS +=
@@ -13,7 +13,7 @@ ifneq ($(LIBS),)
 	LDFLAGS += $(shell pkg-config --libs $(LIBS))
 endif
 
-SRCS = src/main.c
+SRCS = src/main.c src/branch_status.c src/tree_status.c src/stash_status.c
 OBJS = $(SRCS:.c=.o)
 
 all: $(BUILD_DIR)/$(NAME)
