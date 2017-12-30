@@ -22,7 +22,6 @@ You can configure the icons outputed by this tool with the following arguments:
 
     usage: fast-git-prompt [<options>]
 
-        -v, --verbose                be verbose
         -h, --help                   show this help
         -a, --ahead-sigil=SIG        overwrite the ahead sigil
         -b, --behind-sigil=SIG       overwrite the behind sigil
