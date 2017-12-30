@@ -5,6 +5,15 @@
 #include <git2.h>
 #include <regex.h>
 
+#define C_RED  "%F{red}"
+#define C_GRN  "%F{green}"
+#define C_YEL  "%F{yellow}"
+#define C_BLU  "%F{blue}"
+#define C_MAG  "%F{magenta}"
+#define C_CYN  "%F{cyan}"
+#define C_WHT  "%F{white}"
+#define C_RESET "%f"
+
 struct sigils_t {
     char *ahead;
     char *behind;
@@ -99,17 +108,17 @@ void parse_arguments(int argc, char **argv)
     if (NULL == sigils.behind)
         sigils.behind = "↓";
     if (NULL == sigils.staged)
-        sigils.staged = "●";
+        sigils.staged = C_BLU"●"C_RESET;
     if (NULL == sigils.conflicts)
-        sigils.conflicts = "✖";
+        sigils.conflicts = C_RED"✖"C_RESET;
     if (NULL == sigils.unstaged)
-        sigils.unstaged = "✚";
+        sigils.unstaged = C_YEL"✚"C_RESET;
     if (NULL == sigils.untracked)
         sigils.untracked = "…";
     if (NULL == sigils.stashed)
-        sigils.stashed = "⚑";
+        sigils.stashed = C_CYN"⚑"C_RESET;
     if (NULL == sigils.clean)
-        sigils.clean = "✔";
+        sigils.clean = C_GRN"✔"C_RESET;
 }
 
 int stash_cb(size_t index, const char *message, const int *stash_id, int *payload)
