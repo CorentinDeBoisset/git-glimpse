@@ -1,17 +1,18 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <git2.h>
+#include <string.h>
 
 #include "functions.h"
 
-#define C_RED  "%F{red}"
-#define C_GRN  "%F{green}"
-#define C_YEL  "%F{yellow}"
-#define C_BLU  "%F{blue}"
-#define C_MAG  "%F{magenta}"
-#define C_CYN  "%F{cyan}"
-#define C_WHT  "%F{white}"
-#define C_RESET "%f"
+#define C_RED  "%%F{red}"
+#define C_GRN  "%%F{green}"
+#define C_YEL  "%%F{yellow}"
+#define C_BLU  "%%F{blue}"
+#define C_MAG  "%%F{magenta}"
+#define C_CYN  "%%F{cyan}"
+#define C_WHT  "%%F{white}"
+#define C_RESET "%%f"
 
 struct sigils_t {
     char *ahead;
@@ -107,42 +108,67 @@ void parse_arguments(int argc, char **argv)
     if (NULL == sigils.behind)
         sigils.behind = "↓";
     if (NULL == sigils.staged)
-        sigils.staged = C_BLU"●"C_RESET;
+        sigils.staged = "●";
     if (NULL == sigils.conflicts)
-        sigils.conflicts = C_RED"✖"C_RESET;
+        sigils.conflicts = "✖";
     if (NULL == sigils.unstaged)
-        sigils.unstaged = C_YEL"✚"C_RESET;
+        sigils.unstaged = "✚";
     if (NULL == sigils.untracked)
         sigils.untracked = "…";
     if (NULL == sigils.stashed)
-        sigils.stashed = C_CYN"⚑"C_RESET;
+        sigils.stashed = "⚑";
     if (NULL == sigils.clean)
-        sigils.clean = C_GRN"✔"C_RESET;
+        sigils.clean = "✔";
 }
+
+
 
 int main(int argc, char **argv)
 {
     char cwd[BUFSIZ];
+    char directory[BUFSIZ];
     git_repository *repo = NULL;
     struct tree_status tstatus;
     struct branch_status bstatus;
     int stash_count;
+    int i;
 
     parse_arguments(argc, argv);
     getcwd(cwd, BUFSIZ);
 
     git_libgit2_init();
 
-    if(0 == git_repository_open(&repo, cwd)) {
-        stash_count = get_stash_count(repo);
-        get_branch_status(&bstatus, repo);
-        get_tree_status(&tstatus, repo);
+    if ('/' == cwd[0]) {
+        for (i = strlen(cwd); i > 0; i--) {
+            if (cwd[i] == '/' || cwd[i] == '\0') {
+                strncpy(directory, cwd, i);
+                directory[i] = '\0';
+                if (0 == git_repository_open(&repo, directory)) {
+                    stash_count = get_stash_count(repo);
+                    get_branch_status(&bstatus, repo);
+                    get_tree_status(&tstatus, repo);
+                    printf(
+                           C_WHT "(git:%s%s%s" C_RESET C_CYN "%s" C_RESET
+                           C_BLU "%s"C_RESET C_YEL "%s" C_RESET C_WHT "%s" C_RESET C_RED "%s" C_RESET C_GRN "%s" C_RESET ")",
+                           bstatus.head_name ? bstatus.head_name : "",
+                           bstatus.ahead_count ? sigils.ahead : "",
+                           bstatus.behind_count ? sigils.behind : "",
+                           stash_count ? sigils.stashed : "",
+                           tstatus.staged_count ? sigils.staged : "",
+                           tstatus.unstaged_count ? sigils.unstaged : "",
+                           tstatus.untracked_count ? sigils.untracked : "",
+                           tstatus.conflict_count ? sigils.conflicts : "",
+                           (!tstatus.staged_count && !tstatus.unstaged_count && !tstatus.untracked_count && !tstatus.conflict_count) ? sigils.clean : ""
+                    );
 
-        printf("(git:%s)", bstatus.head_name ? bstatus.head_name : "");
+                    if (NULL == bstatus.head_name)
+                        free(bstatus.head_name);
+                    git_repository_free(repo);
 
-        if (NULL == bstatus.head_name)
-            free(bstatus.head_name);
-        git_repository_free(repo);
+                    break;
+                }
+            }
+        }
     }
 
     git_libgit2_shutdown();
