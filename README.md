@@ -10,11 +10,15 @@ The particularity of this tool is that it is aimed at maximizing the performance
 * make
 * gcc
 
-## Build
+## Installation
 
 You can build the program by running:
 
     make all
+
+Then install it with
+
+    sudo make install
 
 
 ## Configure for ZSH
@@ -42,3 +46,9 @@ You can configure the output of this tool with the following arguments:
         -S, --stashed-sigil=SIG      overwrite the stashed sigil
         -C, --clean-sigil=SIG        overwrite the clean sigil
             --zsh-mode               print the colors using ZSH formatting
+
+## Uninstalling git-glimpse
+
+If you want to uninstall git-glimpse, run
+
+    sudo make uninstall

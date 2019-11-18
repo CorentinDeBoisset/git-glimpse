@@ -1,6 +1,7 @@
 NAME = git-glimpse
 BUILD_DIR = ./bin
 SRC_DIR = ./src
+DEST_DIR = /usr/local/bin/
 
 CC = cc
 INCLUDES = -I$(SRC_DIR)
@@ -24,6 +25,15 @@ $(BUILD_DIR)/$(NAME): $(OBJS)
 $(BUILD_DIR)/%.o: $(SRC_PATH)/%.c
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
+
 .PHONY: clean
 clean:
 	rm -f $(OBJS) $(BUILD_DIR)/$(NAME)
+
+.PHONY: install
+install:
+	install $(BUILD_DIR)/$(NAME) $(DEST_DIR)
+
+.PHONY: uninstall
+uninstall:
+	rm $(DEST_DIR)/$(NAME)

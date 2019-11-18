@@ -122,7 +122,7 @@ void parse_arguments(int argc, char **argv)
     if (NULL == options.sigil_clean)
         options.sigil_clean = "✔";
     if (NULL == options.format_string)
-        options.format_string = "\033[37m(git:%s%s%s\033[31;1m%s\033[22;36m%%f|%s\033[34m%s\033[33m%s\033[37m%s\033[31m%s\033[32m%s\033[39m)";
+        options.format_string = "\033[37m(git:%s%s%s\033[31;1m%s\033[22;39m|\033[22;36m%s\033[34m%s\033[33m%s\033[37m%s\033[31m%s\033[32m%s\033[39m)";
 }
 
 
