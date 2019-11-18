@@ -5,25 +5,19 @@
 
 #include "functions.h"
 
-#define C_RED  "%%F{red}"
-#define C_GRN  "%%F{green}"
-#define C_YEL  "%%F{yellow}"
-#define C_BLU  "%%F{blue}"
-#define C_MAG  "%%F{magenta}"
-#define C_CYN  "%%F{cyan}"
-#define C_WHT  "%%F{white}"
-#define C_RESET "%%f"
+#define COLORIZE(color_code, text) "\033["color_code"m"text"\033[39m"
 
-struct sigils_t {
-    char *ahead;
-    char *behind;
-    char *staged;
-    char *conflicts;
-    char *unstaged;
-    char *untracked;
-    char *stashed;
-    char *clean;
-} sigils;
+struct options_t {
+    char *sigil_ahead;
+    char *sigil_behind;
+    char *sigil_staged;
+    char *sigil_conflicts;
+    char *sigil_unstaged;
+    char *sigil_untracked;
+    char *sigil_stashed;
+    char *sigil_clean;
+    char *format_string;
+} options;
 
 static const char *opt_string = ":vha:b:s:c:u:U:S:C:";
 static const struct option long_opts[] = {
@@ -36,6 +30,7 @@ static const struct option long_opts[] = {
     { "untracked-sigil", required_argument, NULL, 'U' },
     { "stashed-sigil", required_argument, NULL, 'S' },
     { "clean-sigil", required_argument, NULL, 'C' },
+    { "zsh-mode", no_argument, NULL, 0 },
     { 0, 0, 0, 0 }
 };
 
@@ -52,49 +47,54 @@ void display_usage(void)
     puts("    -u, --unstaged-sigil=SIG     overwrite the unstaged sigil");
     puts("    -U, --untracked-sigil=SIG    overwrite the untracked sigil");
     puts("    -S, --stashed-sigil=SIG      overwrite the stashed sigil");
-    puts("    -C, --clean-sigil=SIG        overwrite the clean sigil\n");
+    puts("    -C, --clean-sigil=SIG        overwrite the clean sigil");
+    puts("        --zsh-mode               print the colors using ZSH formatting\n");
     exit(EXIT_FAILURE);
 }
 
 void parse_arguments(int argc, char **argv)
 {
     int opt = 0;
+    int option_index = 0;
 
-    while (-1 != (opt = getopt_long(argc, argv, opt_string, long_opts, NULL)))
+    while (-1 != (opt = getopt_long(argc, argv, opt_string, long_opts, &option_index)))
     {
         switch(opt) {
             case 'h':
                 display_usage();
                 break;
             case 'a':
-                sigils.ahead = optarg;
+                options.sigil_ahead = optarg;
                 break;
             case 'b':
-                sigils.behind = optarg;
+                options.sigil_behind = optarg;
                 break;
             case 's':
-                sigils.staged = optarg;
+                options.sigil_staged = optarg;
                 break;
             case 'c':
-                sigils.conflicts = optarg;
+                options.sigil_conflicts = optarg;
                 break;
             case 'u':
-                sigils.unstaged = optarg;
+                options.sigil_unstaged = optarg;
                 break;
             case 'U':
-                sigils.untracked = optarg;
+                options.sigil_untracked = optarg;
                 break;
             case 'S':
-                sigils.stashed = optarg;
+                options.sigil_stashed = optarg;
                 break;
             case 'C':
-                sigils.clean = optarg;
+                options.sigil_clean = optarg;
+                break;
+            case 0:
+                if (strcmp(long_opts[option_index].name, "zsh-mode") == 0) {
+                    options.format_string = "%%F{white}(git:%s%s%s%%F{cyan}%s%%F{blue}%s%%F{yellow}%s%%F{white}%s%%F{red}%s%%F{green}%s%%f)";
+                }
                 break;
             case ':':
                 fprintf(stderr, "option `-%c' requires an argument\n\n", optopt);
                 exit(EXIT_FAILURE);
-                break;
-            case 0:
                 break;
             default:
                 fprintf(stderr, "option is invalid: ignored\n\n");
@@ -103,22 +103,24 @@ void parse_arguments(int argc, char **argv)
         }
     }
 
-    if (NULL == sigils.ahead)
-        sigils.ahead = "↑";
-    if (NULL == sigils.behind)
-        sigils.behind = "↓";
-    if (NULL == sigils.staged)
-        sigils.staged = "●";
-    if (NULL == sigils.conflicts)
-        sigils.conflicts = "✖";
-    if (NULL == sigils.unstaged)
-        sigils.unstaged = "✚";
-    if (NULL == sigils.untracked)
-        sigils.untracked = "…";
-    if (NULL == sigils.stashed)
-        sigils.stashed = "⚑";
-    if (NULL == sigils.clean)
-        sigils.clean = "✔";
+    if (NULL == options.sigil_ahead)
+        options.sigil_ahead = "↑";
+    if (NULL == options.sigil_behind)
+        options.sigil_behind = "↓";
+    if (NULL == options.sigil_staged)
+        options.sigil_staged = "●";
+    if (NULL == options.sigil_conflicts)
+        options.sigil_conflicts = "✖";
+    if (NULL == options.sigil_unstaged)
+        options.sigil_unstaged = "✚";
+    if (NULL == options.sigil_untracked)
+        options.sigil_untracked = "…";
+    if (NULL == options.sigil_stashed)
+        options.sigil_stashed = "⚑";
+    if (NULL == options.sigil_clean)
+        options.sigil_clean = "✔";
+    if (NULL == options.format_string)
+        options.format_string = "\033[37m(git:%s%s%s\033[36m%s\033[34m%s\033[33m%s\033[37m%s\033[31m%s\033[32m%s\033[39m)";
 }
 
 
@@ -148,17 +150,16 @@ int main(int argc, char **argv)
                     get_branch_status(&bstatus, repo);
                     get_tree_status(&tstatus, repo);
                     printf(
-                           C_WHT "(git:%s%s%s" C_RESET C_CYN "%s" C_RESET
-                           C_BLU "%s"C_RESET C_YEL "%s" C_RESET C_WHT "%s" C_RESET C_RED "%s" C_RESET C_GRN "%s" C_RESET ")",
+                           options.format_string,
                            bstatus.head_name ? bstatus.head_name : "",
-                           bstatus.ahead_count ? sigils.ahead : "",
-                           bstatus.behind_count ? sigils.behind : "",
-                           stash_count ? sigils.stashed : "",
-                           tstatus.staged_count ? sigils.staged : "",
-                           tstatus.unstaged_count ? sigils.unstaged : "",
-                           tstatus.untracked_count ? sigils.untracked : "",
-                           tstatus.conflict_count ? sigils.conflicts : "",
-                           (!tstatus.staged_count && !tstatus.unstaged_count && !tstatus.untracked_count && !tstatus.conflict_count) ? sigils.clean : ""
+                           bstatus.ahead_count ? options.sigil_ahead : "",
+                           bstatus.behind_count ? options.sigil_behind : "",
+                           stash_count ? options.sigil_stashed : "",
+                           tstatus.staged_count ? options.sigil_staged : "",
+                           tstatus.unstaged_count ? options.sigil_unstaged : "",
+                           tstatus.untracked_count ? options.sigil_untracked : "",
+                           tstatus.conflict_count ? options.sigil_conflicts : "",
+                           (!tstatus.staged_count && !tstatus.unstaged_count && !tstatus.untracked_count && !tstatus.conflict_count) ? options.sigil_clean : ""
                     );
 
                     if (NULL == bstatus.head_name)
