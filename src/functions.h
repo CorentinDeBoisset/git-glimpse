@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include <git2.h>
 
 struct tree_status {
@@ -12,6 +13,7 @@ struct branch_status {
     int ahead_count;
     int behind_count;
     char *head_name;
+    char *current_operation;
 };
 
 int main(int argc, char **argv);

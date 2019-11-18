@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <git2.h>
+#include <stdbool.h>
 #include <string.h>
+
 
 #include "functions.h"
 
@@ -89,7 +91,7 @@ void parse_arguments(int argc, char **argv)
                 break;
             case 0:
                 if (strcmp(long_opts[option_index].name, "zsh-mode") == 0) {
-                    options.format_string = "%%F{white}(git:%s%s%s%%F{cyan}%s%%F{blue}%s%%F{yellow}%s%%F{white}%s%%F{red}%s%%F{green}%s%%f)";
+                    options.format_string = "%%F{white}(git:%s%s%s%%B%%F{red}%s%%b%%F{cyan}%s%%F{blue}%s%%F{yellow}%s%%F{white}%s%%F{red}%s%%F{green}%s%%f)";
                 }
                 break;
             case ':':
@@ -120,9 +122,8 @@ void parse_arguments(int argc, char **argv)
     if (NULL == options.sigil_clean)
         options.sigil_clean = "✔";
     if (NULL == options.format_string)
-        options.format_string = "\033[37m(git:%s%s%s\033[36m%s\033[34m%s\033[33m%s\033[37m%s\033[31m%s\033[32m%s\033[39m)";
+        options.format_string = "\033[37m(git:%s%s%s\033[31;1m%s\033[22;36m%s\033[34m%s\033[33m%s\033[37m%s\033[31m%s\033[32m%s\033[39m)";
 }
-
 
 
 int main(int argc, char **argv)
@@ -154,6 +155,7 @@ int main(int argc, char **argv)
                            bstatus.head_name ? bstatus.head_name : "",
                            bstatus.ahead_count ? options.sigil_ahead : "",
                            bstatus.behind_count ? options.sigil_behind : "",
+                           bstatus.current_operation ? bstatus.current_operation : "",
                            stash_count ? options.sigil_stashed : "",
                            tstatus.staged_count ? options.sigil_staged : "",
                            tstatus.unstaged_count ? options.sigil_unstaged : "",
@@ -162,7 +164,7 @@ int main(int argc, char **argv)
                            (!tstatus.staged_count && !tstatus.unstaged_count && !tstatus.untracked_count && !tstatus.conflict_count) ? options.sigil_clean : ""
                     );
 
-                    if (NULL == bstatus.head_name)
+                    if (NULL != bstatus.head_name)
                         free(bstatus.head_name);
                     git_repository_free(repo);
 

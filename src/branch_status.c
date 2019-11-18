@@ -6,16 +6,55 @@
 
 
 void get_branch_status(struct branch_status *bstatus, git_repository *repo) {
+    int operation_status = git_repository_state(repo);
+    if (operation_status != GIT_REPOSITORY_STATE_NONE) {
+        switch (operation_status) {
+            case GIT_REPOSITORY_STATE_MERGE:
+                bstatus->current_operation = "[merge]";
+                break;
+            case GIT_REPOSITORY_STATE_REVERT:
+            case GIT_REPOSITORY_STATE_REVERT_SEQUENCE:
+                bstatus->current_operation = "[revert]";
+                break;
+            case GIT_REPOSITORY_STATE_CHERRYPICK:
+            case GIT_REPOSITORY_STATE_CHERRYPICK_SEQUENCE:
+                bstatus->current_operation = "[cherry-pick]";
+                break;
+            case GIT_REPOSITORY_STATE_BISECT:
+                bstatus->current_operation = "[bisect]";
+                break;
+            case GIT_REPOSITORY_STATE_REBASE:
+                bstatus->current_operation = "[rebase]";
+                // TODO read the original branch and its status, instead of the current HEAD
+                break;
+            case GIT_REPOSITORY_STATE_REBASE_INTERACTIVE:
+                bstatus->current_operation = "[rebase-i]";
+                break;
+            case GIT_REPOSITORY_STATE_REBASE_MERGE:
+                bstatus->current_operation = "[rebase-merge]";
+                break;
+            // Not sure about those last 2, but these should be a minority of cases
+            case GIT_REPOSITORY_STATE_APPLY_MAILBOX:
+                bstatus->current_operation = "[mailbox]";
+                break;
+            case GIT_REPOSITORY_STATE_APPLY_MAILBOX_OR_REBASE:
+                bstatus->current_operation = "[mailbox-rebase]";
+                break;
+        }
+    }
+
+    // Then we get the current reference name
+
     size_t ahead, behind;
     git_reference *head, *upstream;
-    const char *head_name = NULL;
+    const char *head_name;
 
     if (git_repository_head(&head, repo)) {
-        head_name = "error";
         return;
     }
 
     if (git_reference_is_branch(head)) {
+        // If the reference is a branch, we read its name, and if it's ahead and/or behind its remote counterpart
         head_name = git_reference_shorthand(head);
 
         if (!git_branch_upstream(&upstream, head)) {
@@ -24,34 +63,20 @@ void get_branch_status(struct branch_status *bstatus, git_repository *repo) {
             bstatus->behind_count = (int) behind;
             git_reference_free(upstream);
         }
+    } else if (git_reference_is_tag(head) || git_reference_is_remote(head) || git_reference_is_note(head)) {
+        // If the reference is something, we get its name
+        head_name = git_reference_shorthand(head);
     } else {
-        git_reflog *reflog;
-        size_t i, reflog_entrycount;
-        const char *reflog_msg;
-        regex_t reflog_regex;
-        regmatch_t regex_matches[2];
-        regcomp(&reflog_regex, "moving from [^ ]* to ([^ ]*)$", REG_EXTENDED);
-
-        git_reflog_read(&reflog, repo, "HEAD");
-        reflog_entrycount = git_reflog_entrycount(reflog);
-        for (i = 0; i < reflog_entrycount; i++) {
-            reflog_msg = git_reflog_entry_message(git_reflog_entry_byindex(reflog, i));
-            if (0 == regexec(&reflog_regex, reflog_msg, 2, regex_matches, 0)) {
-                /* TODO check if string is a branch, or tag or hash */
-                head_name = reflog_msg + regex_matches[1].rm_so;
-                break;
-            }
-        }
-        if (NULL == head_name) {
-            git_object *obj;
-            git_buf buffer = {NULL, 0, 0};
-            git_reference_peel(&obj, head, GIT_OBJ_COMMIT);
-            git_object_short_id(&buffer, obj);
-            head_name = buffer.ptr;
-        }
+        // In last resort, we use the reference's short_id
+        git_object *obj;
+        git_buf buffer = {NULL, 0, 0};
+        git_reference_peel(&obj, head, GIT_OBJ_COMMIT);
+        git_object_short_id(&buffer, obj);
+        head_name = buffer.ptr;
     }
 
     bstatus->head_name = malloc(strlen(head_name));
     strcpy(bstatus->head_name, head_name);
+
     git_reference_free(head);
 }

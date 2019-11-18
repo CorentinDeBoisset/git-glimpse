@@ -13,7 +13,7 @@ ifneq ($(LIBS),)
 	LDFLAGS += $(shell pkg-config --libs $(LIBS))
 endif
 
-SRCS = src/main.c src/branch_status.c src/tree_status.c src/stash_status.c
+SRCS = $(wildcard src/*.c)
 OBJS = $(SRCS:.c=.o)
 
 all: $(BUILD_DIR)/$(NAME)
