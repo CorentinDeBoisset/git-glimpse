@@ -16,9 +16,19 @@ You can build the program by running:
 
     make all
 
+
+## Configure for ZSH
+
+You can add a right prompt in ZSH, by using the following line in your `.zshrc`:
+
+    RPROMPT='$(git-glimpse --zsh-mode)'
+
+The exact path to git-glimpse can be found using `which git-glimpse`
+
+
 ## Using the CLI
 
-You can configure the icons outputed by this tool with the following arguments:
+You can configure the output of this tool with the following arguments:
 
     usage: git-glimpse [<options>]
 
@@ -31,7 +41,4 @@ You can configure the icons outputed by this tool with the following arguments:
         -U, --untracked-sigil=SIG    overwrite the untracked sigil
         -S, --stashed-sigil=SIG      overwrite the stashed sigil
         -C, --clean-sigil=SIG        overwrite the clean sigil
-
-## Configure for ZSH
-
-// TODO
+            --zsh-mode               print the colors using ZSH formatting
