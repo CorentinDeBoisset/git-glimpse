@@ -32,3 +32,6 @@ You can configure the icons outputed by this tool with the following arguments:
         -S, --stashed-sigil=SIG      overwrite the stashed sigil
         -C, --clean-sigil=SIG        overwrite the clean sigil
 
+## Configure for ZSH
+
+// TODO

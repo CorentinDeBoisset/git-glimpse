@@ -5,7 +5,7 @@ SRC_DIR = ./src
 CC = cc
 INCLUDES = -I$(SRC_DIR)
 LIBS = libgit2
-CFLAGS += -std=c99 -W -Wall -ansi -pedantic -O2 -D'BINNAME="$(NAME)"'
+CFLAGS += -std=c99 -W -Wall -pedantic -O2 -D'BINNAME="$(NAME)"'
 LDFLAGS +=
 
 ifneq ($(LIBS),)
