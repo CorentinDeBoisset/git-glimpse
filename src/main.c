@@ -42,7 +42,7 @@ static const struct option long_opts[] = {
 void display_usage(void)
 {
     puts(
-        "usage: fast-git-prompt [<options>]\n"
+        "usage: " BINNAME " [<options>]\n"
     );
     puts("    -h, --help                   show this help");
     puts("    -a, --ahead-sigil=SIG        overwrite the ahead sigil");

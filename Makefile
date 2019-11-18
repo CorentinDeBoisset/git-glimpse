@@ -1,11 +1,11 @@
-NAME = fast-git-prompt
+NAME = git-glimpse
 BUILD_DIR = ./bin
 SRC_DIR = ./src
 
 CC = cc
 INCLUDES = -I$(SRC_DIR)
 LIBS = libgit2
-CFLAGS += -W -Wall -ansi -pedantic -O2
+CFLAGS += -std=c99 -W -Wall -ansi -pedantic -O2 -D'BINNAME="$(NAME)"'
 LDFLAGS +=
 
 ifneq ($(LIBS),)
@@ -25,5 +25,5 @@ $(BUILD_DIR)/%.o: $(SRC_PATH)/%.c
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 .PHONY: clean
-clean: 
+clean:
 	rm -f $(OBJS) $(BUILD_DIR)/$(NAME)

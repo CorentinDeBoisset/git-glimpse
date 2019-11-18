@@ -1,8 +1,8 @@
-# Fast-git-Prompt
+# Git Glimpse
 
-`Fast-git-prompt` is a command-line tool that is aimed at generating a git prompt like the one from [zsh-vcs-prompt](https://github.com/yonchu/zsh-vcs-prompt).
+`git-glimpse` is a command-line tool that is aimed at generating a git prompt like the one from [zsh-vcs-prompt](https://github.com/yonchu/zsh-vcs-prompt).
 
-The particularity of this tool is that it is aimed at maximizing the performances using the native C interface for git.
+The particularity of this tool is that it is aimed at maximizing the performances using the native C interface for git (vs. Python that can slow down a terminal)
 
 ## Requirements
 
@@ -20,7 +20,7 @@ You can build the program by running:
 
 You can configure the icons outputed by this tool with the following arguments:
 
-    usage: fast-git-prompt [<options>]
+    usage: git-glimpse [<options>]
 
         -h, --help                   show this help
         -a, --ahead-sigil=SIG        overwrite the ahead sigil
