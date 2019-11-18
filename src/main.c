@@ -91,7 +91,7 @@ void parse_arguments(int argc, char **argv)
                 break;
             case 0:
                 if (strcmp(long_opts[option_index].name, "zsh-mode") == 0) {
-                    options.format_string = "%%F{white}(git:%s%s%s%%B%%F{red}%s%%b%%F{cyan}%s%%F{blue}%s%%F{yellow}%s%%F{white}%s%%F{red}%s%%F{green}%s%%f)";
+                    options.format_string = "%%F{white}(git:%s%s%s%%B%%F{red}%s%%b%%f|%%F{cyan}%s%%F{blue}%s%%F{yellow}%s%%F{white}%s%%F{red}%s%%F{green}%s%%f)";
                 }
                 break;
             case ':':
@@ -122,7 +122,7 @@ void parse_arguments(int argc, char **argv)
     if (NULL == options.sigil_clean)
         options.sigil_clean = "✔";
     if (NULL == options.format_string)
-        options.format_string = "\033[37m(git:%s%s%s\033[31;1m%s\033[22;36m%s\033[34m%s\033[33m%s\033[37m%s\033[31m%s\033[32m%s\033[39m)";
+        options.format_string = "\033[37m(git:%s%s%s\033[31;1m%s\033[22;36m%%f|%s\033[34m%s\033[33m%s\033[37m%s\033[31m%s\033[32m%s\033[39m)";
 }
 
 
