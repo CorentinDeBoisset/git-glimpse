@@ -4,6 +4,16 @@
 
 The particularity of this tool is that it is aimed at maximizing the performances using the native C interface for git (vs. Python that can slow down a terminal)
 
+![Git: Mastker OK](./img/master_ok.png)
+
+![Git: Advance on upstream](./img/upstream_advance.png)
+
+![Git: Staged files](./img/staged.png)
+
+![Git: Stash present](./img/stash.png)
+
+![Git: Rebase in progress](./img/rebase.png)
+
 ## Requirements
 
 * libgit2-dev
