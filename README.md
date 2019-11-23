@@ -8,6 +8,8 @@ The particularity of this tool is that it is aimed at maximizing the performance
 
 ![Git: Advance on upstream](./img/upstream_advance.png)
 
+![Git: Unstaged files](./img/unstaged.png)
+
 ![Git: Staged files](./img/staged.png)
 
 ![Git: Stash present](./img/stash.png)

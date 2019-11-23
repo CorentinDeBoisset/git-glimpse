@@ -2,3 +2,5 @@
 *.o
 bin/*
 !bin/.gitkeep
+img/*.xcf
+*.DS_Store
