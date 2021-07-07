@@ -31,7 +31,7 @@ clean:
 	rm -f $(OBJS) $(BUILD_DIR)/$(NAME)
 
 .PHONY: install
-install:
+install: $(BUILD_DIR)/$(NAME)
 	install $(BUILD_DIR)/$(NAME) $(DEST_DIR)
 
 .PHONY: uninstall
