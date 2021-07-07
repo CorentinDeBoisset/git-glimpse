@@ -75,7 +75,7 @@ void get_branch_status(struct branch_status *bstatus, git_repository *repo) {
         head_name = buffer.ptr;
     }
 
-    bstatus->head_name = malloc(strlen(head_name));
+    bstatus->head_name = malloc(strlen(head_name) + 1);
     strcpy(bstatus->head_name, head_name);
 
     git_reference_free(head);
